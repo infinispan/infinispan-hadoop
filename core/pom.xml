@@ -13,7 +13,7 @@
     <artifactId>infinispan-hadoop-core</artifactId>
     <packaging>jar</packaging>
 
-    <name>Infinispan Hadoop core</name>
+    <name>Infinispan Hadoop Core</name>
     <description>InputFormat/OutputFormat to integrate with Hadoop Map Reduce and supported tools</description>
 
     <dependencies>

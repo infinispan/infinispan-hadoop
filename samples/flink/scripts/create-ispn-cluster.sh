@@ -13,11 +13,8 @@ echo "Server 2 spawned"
 waitForCluster "ispn-1"
 
 echo "Creating caches"
-create-cache "ispn-1" "map-reduce-in"
-create-cache "ispn-1" "map-reduce-out"
-
-create-cache "ispn-2" "map-reduce-in"
-create-cache "ispn-2" "map-reduce-out"
+create-cache "ispn-1" "phrases"
+create-cache "ispn-2" "phrases"
 
 chmod 755 target/scripts/*.sh
 
