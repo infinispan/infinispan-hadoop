@@ -23,7 +23,7 @@
     <modules>
         <module>parent</module>
         <module>core</module>
-        <module>samples/mapreduce</module>
+        <module>samples</module>
     </modules>
 
     <build>

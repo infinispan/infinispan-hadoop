@@ -1,4 +1,4 @@
-package org.infinispan.hadoop.util;
+package org.infinispan.hadoop.sample.util;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;

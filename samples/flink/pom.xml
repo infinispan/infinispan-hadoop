@@ -10,11 +10,11 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>mapreduce-sample</artifactId>
+    <artifactId>flink-sample</artifactId>
     <packaging>jar</packaging>
 
-    <name>Infinispan Hadoop YARN MapReduce Sample</name>
-    <description>Map reduce sample using Infinispan InputFormat/OutputFormat</description>
+    <name>Infinispan Hadoop Flink Sample</name>
+    <description>Infinispan InputFormat/OutputFormat used by Flink</description>
 
     <dependencies>
 
@@ -31,16 +31,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-mapreduce-client-common</artifactId>
-            <version>${version.hadoop}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-mapreduce-client-core</artifactId>
-            <version>${version.hadoop}</version>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-java</artifactId>
+            <version>0.9.1</version>
             <scope>provided</scope>
         </dependency>
 
@@ -50,6 +43,7 @@
             <version>${version.hadoop}</version>
             <scope>provided</scope>
         </dependency>
+
 
     </dependencies>
     <build>
@@ -64,6 +58,11 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.infinispan.hadoop.flink.sample.WordFrequency</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
                 <executions>
                     <execution>
