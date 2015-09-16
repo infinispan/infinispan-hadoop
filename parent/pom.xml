@@ -49,6 +49,12 @@
         </mailingList>
     </mailingLists>
 
+    <scm>
+        <connection>scm:git:git@github.com:infinispan/infinispan-hadoop.git</connection>
+        <developerConnection>scm:git:git@github.com:infinispan/infinispan-hadoop.git</developerConnection>
+        <url>https://github.com/infinispan/infinispan-hadoop</url>
+    </scm>
+
     <issueManagement>
         <system>jira</system>
         <url>https://issues.jboss.org/browse/ISPN</url>
