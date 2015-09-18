@@ -56,7 +56,7 @@ YARN UI on http://172.17.0.26:8088/cluster/nodes
 
 A simple 100k text file with random phrases can be generated using:
 
-```docker exec -it master  /usr/local/sample/target/scripts/generate.sh 100000```
+```docker exec -it master /usr/local/sample/target/scripts/generate.sh 100000```
 
 Inspect it using:
 
@@ -67,7 +67,7 @@ docker exec -it master more /file.txt
 and populate the cache using the command line:
 
 ```
-docker exec -it master java -cp /usr/local/sample/target/mapreduce-sample-0.1-SNAPSHOT-jar-with-dependencies.jar  org.infinispan.hadoop.sample.util.ControllerCache --host $INFINISPAN_SERVER --cachename map-reduce-in --populate --file /file.txt
+docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar  org.infinispan.hadoop.sample.util.ControllerCache --host $INFINISPAN_SERVER --cachename map-reduce-in --populate --file /file.txt"
 ``` 
  
 ### Executing the job
@@ -75,13 +75,13 @@ docker exec -it master java -cp /usr/local/sample/target/mapreduce-sample-0.1-SN
 To execute the Job ```org.infinispan.hadoop.sample.InfinispanJobMain``` that reads data from the ```map-reduce-in``` cache, count words and write the output to ```map-reduce-out```:
 
 ```
-docker exec -it master sh -l yarn jar /usr/local/sample/target/mapreduce-sample-0.1-SNAPSHOT-jar-with-dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain $INFINISPAN_SERVER
+docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain $INFINISPAN_SERVER"
 ```
 
 ### Dump the output
 
 ```
-docker exec -it master java -cp /usr/local/sample/target/mapreduce-sample-0.1-SNAPSHOT-jar-with-dependencies.jar org.infinispan.hadoop.sample.util.ControllerCache --host $INFINISPAN_SERVER --cachename map-reduce-out --dump
+docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.util.ControllerCache --host $INFINISPAN_SERVER --cachename map-reduce-out --dump"
 ```
 
 ### Changing the job
