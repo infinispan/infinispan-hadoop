@@ -42,7 +42,7 @@ export INFINISPAN_SERVER=$(docker inspect --format '{{ .NetworkSettings.IPAddres
 To create a 3 node YARN cluster:
 
 ```
-bash <(curl -s https://raw.githubusercontent.com/gustavonalle/docker/master/yarn/cluster.sh)
+bash <(curl -s https://raw.githubusercontent.com/gustavonalle/yarn-docker/master/cluster.sh)
 ```
 
 After successful creation, it should print:
