@@ -1,4 +1,4 @@
-# Infinispan Hadoop   ![Build Status](https://travis-ci.org/infinispan/infinispan-hadoop.svg?branch=master)
+# Infinispan Hadoop   [![Build Status](https://travis-ci.org/infinispan/infinispan-hadoop.svg?branch=master)](https://travis-ci.org/infinispan/infinispan-hadoop)
 
 Integrations with Apache Hadoop and related frameworks.
 
