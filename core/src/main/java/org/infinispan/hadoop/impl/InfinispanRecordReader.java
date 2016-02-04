@@ -71,4 +71,7 @@ public class InfinispanRecordReader<K, V> extends RecordReader<K, V> {
       remoteCache.getRemoteCacheManager().stop();
    }
 
+   public RemoteCache<K, V> getRemoteCache() {
+      return remoteCache;
+   }
 }

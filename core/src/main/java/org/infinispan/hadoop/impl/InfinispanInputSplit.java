@@ -7,6 +7,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,12 +23,12 @@ import static org.apache.hadoop.io.WritableUtils.writeVInt;
  */
 public class InfinispanInputSplit extends InputSplit implements Writable {
 
-   private String preferredLocation;
+   private InetSocketAddress preferredServer;
    private Set<Integer> segments = new HashSet<>();
 
-   public InfinispanInputSplit(Set<Integer> segments, String preferredLocation) {
+   public InfinispanInputSplit(Set<Integer> segments, InetSocketAddress preferredServer) {
       this.segments.addAll(segments);
-      this.preferredLocation = preferredLocation;
+      this.preferredServer = preferredServer;
    }
 
    @SuppressWarnings("unused")
@@ -41,7 +42,7 @@ public class InfinispanInputSplit extends InputSplit implements Writable {
 
    @Override
    public String[] getLocations() throws IOException, InterruptedException {
-      return new String[]{preferredLocation};
+      return new String[]{preferredServer.getHostName()};
    }
 
    public Set<Integer> getSegments() {
@@ -50,7 +51,8 @@ public class InfinispanInputSplit extends InputSplit implements Writable {
 
    @Override
    public void write(DataOutput out) throws IOException {
-      Text.writeString(out, preferredLocation);
+      Text.writeString(out, preferredServer.getHostString());
+      writeVInt(out, preferredServer.getPort());
       writeVInt(out, segments.size());
       for (Integer segment : segments) {
          writeVInt(out, segment);
@@ -59,10 +61,16 @@ public class InfinispanInputSplit extends InputSplit implements Writable {
 
    @Override
    public void readFields(DataInput in) throws IOException {
-      preferredLocation = Text.readString(in);
+      String hostString = Text.readString(in);
+      int port = readVInt(in);
+      this.preferredServer = new InetSocketAddress(hostString, port);
       int segmentSize = readVInt(in);
       for (int i = 0; i < segmentSize; i++) {
-         segments.add(readVInt(in));
+         this.segments.add(readVInt(in));
       }
+   }
+
+   public InetSocketAddress getPreferredServer() {
+      return preferredServer;
    }
 }

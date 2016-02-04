@@ -22,8 +22,7 @@ public class InfinispanJobMain {
       }
       String host = args[0];
 
-      configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_HOST, host);
-      configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_HOST, host);
+      configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_SERVER_LIST, host);
 
       configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_NAME, "map-reduce-in");
       configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_NAME, "map-reduce-out");

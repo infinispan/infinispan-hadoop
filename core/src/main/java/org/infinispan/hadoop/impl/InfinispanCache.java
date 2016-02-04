@@ -43,20 +43,21 @@ public class InfinispanCache<K, V> {
    }
 
 
-   public static <K, V> InfinispanCache<K, V> getInputCache(InfinispanConfiguration configuration) {
-      return getCache(configuration.getInputRemoteCacheHost(), configuration.getInputRemoteCachePort(),
-              configuration.getInputCacheName());
+   public static <K, V> InfinispanCache<K, V> getInputCache(InfinispanConfiguration configuration, InetSocketAddress preferredServer) {
+      return getCache(configuration.getInputCacheName(), configuration.getInputRemoteCacheServerList(), preferredServer);
    }
 
-   public static <K, V> InfinispanCache<K, V> getOutputCache(InfinispanConfiguration configuration) {
-      return getCache(configuration.getOutputRemoteCacheHost(), configuration.getOutputRemoteCachePort(),
-              configuration.getOutputCacheName());
+   public static <K, V> InfinispanCache<K, V> getOutputCache(InfinispanConfiguration configuration, InetSocketAddress preferredServer) {
+      return getCache(configuration.getOutputCacheName(), configuration.getOutputRemoteCacheServerList(), preferredServer);
    }
 
-   private static <K, V> InfinispanCache<K, V> getCache(String host, int port, String name) {
-      log.info("Connecting to cache " + name + " in [" + host + ":" + port + "]");
+   private static <K, V> InfinispanCache<K, V> getCache(String name, String serverList, InetSocketAddress preferredServer) {
+      log.info("Connecting to cache " + name + " in [" + serverList + "]");
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-      configurationBuilder.addServer().host(host).port(port).balancingStrategy(new PreferredServerBalancingStrategy(InetSocketAddress.createUnresolved(host, port)));
+      configurationBuilder.addServers(serverList);
+      if (preferredServer != null) {
+         configurationBuilder.balancingStrategy(new PreferredServerBalancingStrategy(preferredServer));
+      }
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(configurationBuilder.build());
       RemoteCache<K, V> remoteCache = remoteCacheManager.getCache(name);
       return new InfinispanCache<>(remoteCacheManager, remoteCache);

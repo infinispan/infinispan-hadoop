@@ -2,7 +2,6 @@ package org.infinispan.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.hadoop.impl.DefaultSplitter;
 import org.infinispan.hadoop.serialization.JBossMarshallerSerialization;
 
@@ -19,6 +18,7 @@ public final class InfinispanConfiguration {
 
    public static final int DEFAULT_READ_BATCH_SIZE = 5000;
    public static final int DEFAULT_WRITE_BATCH_SIZE = 500;
+   public static final String DEFAULT_SERVER_LIST = "127.0.0.1:11222";
 
    /**
     * Name of the filter factory deployed in the server to be used as a pre-filter in the mapper
@@ -31,14 +31,11 @@ public final class InfinispanConfiguration {
    public static final String INPUT_REMOTE_CACHE_NAME = "hadoop.ispn.input.cache.name";
 
    /**
-    * Host of the input cache
+    * Initial list of Hot Rod servers to connect to input cache, specified in the following format:
+    * host1:port1;host2:port2...
+    * At least one host:port must be specified
     */
-   public static final String INPUT_REMOTE_CACHE_HOST = "hadoop.ispn.input.remote.cache.host";
-
-   /**
-    * Port of the input cache
-    */
-   public static final String INPUT_REMOTE_CACHE_PORT = "hadoop.ispn.input.remote.cache.port";
+   public static final String INPUT_REMOTE_CACHE_SERVER_LIST = "hadoop.ispn.input.remote.cache.servers";
 
    /**
     * Name of cache where output from the reducer will be stored
@@ -46,14 +43,11 @@ public final class InfinispanConfiguration {
    public static final String OUTPUT_REMOTE_CACHE_NAME = "hadoop.ispn.output.cache.name";
 
    /**
-    * Host of the output cache
+    * Initial list of Hot Rod servers to connect to output cache, specified in the following format:
+    * host1:port1;host2:port2...
+    * At least one host:port must be specified
     */
-   public static final String OUTPUT_REMOTE_CACHE_HOST = "hadoop.ispn.output.remote.cache.host";
-
-   /**
-    * Port of the output cache
-    */
-   public static final String OUTPUT_REMOTE_CACHE_PORT = "hadoop.ispn.output.remote.cache.port";
+   public static final String OUTPUT_REMOTE_CACHE_SERVER_LIST = "hadoop.ispn.output.remote.cache.servers";
 
    /**
     * Comma separated list of classes whose serialization is to be handled by {@link
@@ -100,20 +94,12 @@ public final class InfinispanConfiguration {
       return configuration.get(OUTPUT_REMOTE_CACHE_NAME, RemoteCacheManager.DEFAULT_CACHE_NAME);
    }
 
-   public String getInputRemoteCacheHost() {
-      return configuration.get(INPUT_REMOTE_CACHE_HOST, "localhost");
+   public String getInputRemoteCacheServerList() {
+      return configuration.get(INPUT_REMOTE_CACHE_SERVER_LIST, DEFAULT_SERVER_LIST);
    }
 
-   public int getInputRemoteCachePort() {
-      return configuration.getInt(INPUT_REMOTE_CACHE_PORT, ConfigurationProperties.DEFAULT_HOTROD_PORT);
-   }
-
-   public String getOutputRemoteCacheHost() {
-      return configuration.get(OUTPUT_REMOTE_CACHE_HOST, "localhost");
-   }
-
-   public int getOutputRemoteCachePort() {
-      return configuration.getInt(OUTPUT_REMOTE_CACHE_PORT, ConfigurationProperties.DEFAULT_HOTROD_PORT);
+   public String getOutputRemoteCacheServerList() {
+      return configuration.get(OUTPUT_REMOTE_CACHE_SERVER_LIST, DEFAULT_SERVER_LIST);
    }
 
    public String getInputFilterFactory() {
