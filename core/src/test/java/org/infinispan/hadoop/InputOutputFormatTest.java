@@ -5,31 +5,31 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.filter.AbstractKeyValueFilterConverter;
-import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
-import org.infinispan.filter.NamedFactory;
-import org.infinispan.hadoop.impl.InfinispanInputSplit;
 import org.infinispan.hadoop.testutils.domain.CategoryStats;
+import org.infinispan.hadoop.testutils.converters.CustomFilterFactory;
+import org.infinispan.hadoop.testutils.converters.FromWritableOutputConverter;
+import org.infinispan.hadoop.testutils.converters.ToWritableInputConverter;
+import org.infinispan.hadoop.testutils.converters.ToWritableOutputConverter;
 import org.infinispan.hadoop.testutils.domain.WebPage;
 import org.infinispan.hadoop.testutils.hadoop.MiniHadoopCluster;
-import org.infinispan.metadata.Metadata;
+import org.infinispan.hadoop.testutils.mapreduce.CacheMapper;
+import org.infinispan.hadoop.testutils.mapreduce.CacheReducer;
+import org.infinispan.hadoop.testutils.mapreduce.HDFSMapper;
+import org.infinispan.hadoop.testutils.mapreduce.HDFSReducer;
+import org.infinispan.hadoop.testutils.mapreduce.InfinispanMapper;
+import org.infinispan.hadoop.testutils.mapreduce.InfinispanReducer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OverProtocol;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -50,18 +50,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.SocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.Assert.assertTrue;
 
@@ -378,179 +372,10 @@ public class InputOutputFormatTest {
       return map;
    }
 
-   /**
-    * Custom splitter implementation that generates 2 splits per server
-    */
-   public static class CustomSplitter implements InfinispanSplitter {
-
-      @Override
-      public List<InputSplit> calculateSplits(CacheTopologyInfo cacheTopologyInfo) throws IOException {
-         Map<SocketAddress, Set<Integer>> segmentsPerServer = cacheTopologyInfo.getSegmentsPerServer();
-         if (segmentsPerServer.isEmpty()) {
-            throw new IOException("No servers to split");
-         }
-         List<InputSplit> inputSplits = new ArrayList<>();
-         Set<Integer> taken = new HashSet<>();
-
-         for (Map.Entry<SocketAddress, Set<Integer>> server : segmentsPerServer.entrySet()) {
-            Set<Integer> segments = server.getValue();
-            segments.removeAll(taken);
-            Integer[] objects = segments.toArray(new Integer[segments.size()]);
-            int segmentsSize = segments.size();
-            Integer[] firstPart = Arrays.copyOfRange(objects, 0, segmentsSize / 2);
-            Integer[] lastPart = Arrays.copyOfRange(objects, segmentsSize / 2, segmentsSize);
-
-            List<Integer> initChunk = Arrays.asList(firstPart);
-            List<Integer> endChunk = Arrays.asList(lastPart);
-            Set<Integer> s1 = new HashSet<>();
-            Set<Integer> s2 = new HashSet<>();
-            s1.addAll(initChunk);
-            s2.addAll(endChunk);
-            inputSplits.add(new InfinispanInputSplit(s1, ((InetSocketAddress) server.getKey()).getHostName()));
-            inputSplits.add(new InfinispanInputSplit(s2, ((InetSocketAddress) server.getKey()).getHostName()));
-
-            taken.addAll(segments);
-         }
-         return inputSplits;
-      }
-   }
-
-   /**
-    * Mapper reducer pair using only externalizable objects
-    */
-   private static class InfinispanMapper extends Mapper<Integer, WebPage, String, Integer> {
-      @Override
-      protected void map(Integer key, WebPage webPage, Context context) throws IOException, InterruptedException {
-         context.write(webPage.getCategory(), 1);
-      }
-   }
-
-   private static class InfinispanReducer extends Reducer<String, Integer, String, CategoryStats> {
-      @Override
-      protected void reduce(String key, Iterable<Integer> values, Context context) throws IOException, InterruptedException {
-         int sum = 0;
-         for (Integer val : values) {
-            sum += val;
-         }
-         context.write(key, new CategoryStats(sum));
-      }
-   }
-
-   /**
-    * Mapper reducer pair using mixed externalizable/writable objects
-    */
-   private static class CacheMapper extends Mapper<Integer, WebPage, Text, IntWritable> {
-      private final static IntWritable one = new IntWritable(1);
-      private Text word = new Text();
-
-      @Override
-      protected void map(Integer key, WebPage webPage, Context context) throws IOException, InterruptedException {
-         word.set(webPage.getCategory());
-         context.write(word, one);
-      }
-   }
-
-   private static class CacheReducer extends Reducer<Text, IntWritable, String, CategoryStats> {
-
-      @Override
-      protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-         int sum = 0;
-         for (IntWritable val : values) {
-            sum += val.get();
-         }
-         context.write(key.toString(), new CategoryStats(sum));
-      }
-   }
-
-   /**
-    * Mapper reducer pair using Hadoop writables only
-    */
-   private static class HDFSMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-      private final static IntWritable one = new IntWritable(1);
-      private Text word = new Text();
-
-      @Override
-      protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-         String category = value.toString().split("\\|")[1];
-         word.set(category);
-         context.write(word, one);
-      }
-   }
-
-   private static class HDFSReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-      private IntWritable result = new IntWritable();
-
-      public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-         int sum = 0;
-         for (IntWritable val : values) {
-            sum += val.get();
-         }
-         result.set(sum);
-         context.write(key, result);
-      }
-   }
-
-   /**
-    * Converters
-    */
-   public static class ToWritableInputConverter implements KeyValueConverter<Integer, WebPage, LongWritable, Text> {
-
-      @Override
-      public LongWritable convertKey(Integer key) {
-         return new LongWritable((long) key);
-      }
-
-      @Override
-      public Text convertValue(WebPage value) {
-         return new Text(value.getAddress().toString() + "|" + value.getCategory());
-      }
-   }
-
-   public static class ToWritableOutputConverter implements KeyValueConverter<Text, IntWritable, String, CategoryStats> {
-      @Override
-      public String convertKey(Text key) {
-         return key.toString();
-      }
-
-      @Override
-      public CategoryStats convertValue(IntWritable value) {
-         return new CategoryStats(value.get());
-      }
-   }
-
-   public static class FromWritableOutputConverter implements KeyValueConverter<Text, IntWritable, String, CategoryStats> {
-      @Override
-      public String convertKey(Text key) {
-         return key.toString();
-      }
-
-      @Override
-      public CategoryStats convertValue(IntWritable value) {
-         return new CategoryStats(value.get());
-      }
-   }
-
    private static Archive<?> createFilterArchive() throws IOException {
       return ShrinkWrap.create(JavaArchive.class, "server-filter.jar")
               .addClasses(CustomFilterFactory.class, CustomFilterFactory.GovernmentFilter.class, WebPage.class)
               .addAsServiceProvider(KeyValueFilterConverterFactory.class, CustomFilterFactory.class);
    }
-
-   @NamedFactory(name = GOVERNMENT_PAGE_FILTER_FACTORY)
-   public static class CustomFilterFactory implements KeyValueFilterConverterFactory<Integer, WebPage, WebPage> {
-      @Override
-      public KeyValueFilterConverter<Integer, WebPage, WebPage> getFilterConverter() {
-         return new GovernmentFilter();
-      }
-
-      public static class GovernmentFilter extends AbstractKeyValueFilterConverter<Integer, WebPage, WebPage> implements Serializable {
-         @Override
-         public WebPage filterAndConvert(Integer key, WebPage value, Metadata metadata) {
-            String host = value.getAddress().getHost();
-            return host.endsWith("gov") || host.endsWith("gov.uk") ? value : null;
-         }
-      }
-   }
-
 
 }
