@@ -9,6 +9,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.hadoop.impl.ConvertingRecordReader;
 import org.infinispan.hadoop.impl.InfinispanCache;
+import org.infinispan.hadoop.impl.InfinispanInputSplit;
 import org.infinispan.hadoop.impl.InfinispanRecordReader;
 
 import java.io.IOException;
@@ -26,18 +27,18 @@ public class InfinispanInputFormat<K, V> extends InputFormat<K, V> {
    public List<InputSplit> getSplits(JobContext jobContext) throws IOException, InterruptedException {
       Configuration configuration = jobContext.getConfiguration();
       InfinispanConfiguration infinispanConfiguration = new InfinispanConfiguration(configuration);
-      InfinispanCache<K, V> inputCache = InfinispanCache.getInputCache(infinispanConfiguration);
+      InfinispanCache<K, V> inputCache = InfinispanCache.getInputCache(infinispanConfiguration, null);
       InfinispanSplitter splitter = infinispanConfiguration.getSplitter();
       return splitter.calculateSplits(inputCache.getCacheTopology());
    }
 
    @Override
    public RecordReader<K, V> createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-      Configuration configuration = taskAttemptContext.getConfiguration();
-      InfinispanConfiguration infinispanConfiguration = new InfinispanConfiguration(configuration);
+      InfinispanConfiguration infinispanConfiguration = new InfinispanConfiguration(taskAttemptContext.getConfiguration());
+      InfinispanInputSplit infinispanInputSplit = (InfinispanInputSplit) inputSplit;
       String inputFilterFactory = infinispanConfiguration.getInputFilterFactory();
       Integer readBatchSize = infinispanConfiguration.getReadBatchSize();
-      InfinispanCache<K, V> inputCache = InfinispanCache.getInputCache(infinispanConfiguration);
+      InfinispanCache<K, V> inputCache = InfinispanCache.getInputCache(infinispanConfiguration,infinispanInputSplit.getPreferredServer());
       RemoteCache<K, V> remoteCache = inputCache.getRemoteCache();
       KeyValueConverter<Object, Object, K, V> inputConverter = infinispanConfiguration.getInputConverter();
       InfinispanRecordReader<K, V> recordReader = new InfinispanRecordReader<>(remoteCache, inputFilterFactory, readBatchSize);

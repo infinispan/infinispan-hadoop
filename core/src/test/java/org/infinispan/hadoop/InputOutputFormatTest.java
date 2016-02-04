@@ -14,6 +14,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.infinispan.arquillian.core.HotRodEndpoint;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -54,9 +55,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +100,18 @@ public class InputOutputFormatTest {
    private RemoteCache<Integer, WebPage> inputCache;
    private RemoteCache<String, CategoryStats> outputCache;
 
+   private String buildServerList(RemoteInfinispanServer... servers) {
+      StringBuilder stringBuilder = new StringBuilder();
+      for (int i = 0; i < servers.length; i++) {
+         HotRodEndpoint hotrodEndpoint = servers[i].getHotrodEndpoint();
+         stringBuilder.append(hotrodEndpoint.getInetAddress().getHostName()).append(":").append(hotrodEndpoint.getPort());
+         if (i < servers.length - 1) {
+            stringBuilder.append(";");
+         }
+      }
+      return stringBuilder.toString();
+   }
+
    @BeforeClass
    public static void initHadoop() throws IOException {
       miniHadoopCluster.start();
@@ -112,19 +127,12 @@ public class InputOutputFormatTest {
       Configuration baseConfiguration = miniHadoopCluster.getConfiguration();
       baseConfiguration.iterator().forEachRemaining(c -> configuration.set(c.getKey(), c.getValue()));
 
-      String host1Address = server1.getHotrodEndpoint().getInetAddress().getHostAddress();
-      int port1 = server1.getHotrodEndpoint().getPort();
-
-      String host2Address = server2.getHotrodEndpoint().getInetAddress().getHostAddress();
-      int port2 = server2.getHotrodEndpoint().getPort();
-
-      configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_HOST, host1Address);
-      configuration.setInt(InfinispanConfiguration.INPUT_REMOTE_CACHE_PORT, port1);
+      String serverList = buildServerList(server1, server2);
+      configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_SERVER_LIST, serverList);
       configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_NAME, INPUT_CACHE_NAME);
 
       configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_NAME, OUTPUT_CACHE_NAME);
-      configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_HOST, host2Address);
-      configuration.setInt(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_PORT, port2);
+      configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_SERVER_LIST, serverList);
 
       configuration.set("io.serializations", "org.apache.hadoop.io.serializer.WritableSerialization, org.infinispan.hadoop.serialization.JBossMarshallerSerialization");
       configuration.set(InfinispanConfiguration.SERIALIZATION_CLASSES, "java.lang.String, java.lang.Integer," + WebPage.class.getName() + "," + CategoryStats.class.getName());
@@ -348,14 +356,9 @@ public class InputOutputFormatTest {
 
    @Test
    public void testPreferredServerUnreachable() throws Exception {
-      int invalidPort = 3421;
-      Configuration configuration = createBaseConfiguration();
+      InfinispanInputSplit invalidSplit = createInfinispanSplit();
 
-
-      configuration.setInt(InfinispanConfiguration.INPUT_REMOTE_CACHE_PORT, invalidPort);
-
-      InfinispanInputSplit invalidSplit = createInfinispanSplit(configuration);
-
+      Configuration configuration = miniHadoopCluster.getConfiguration();
       TaskAttemptContextImpl fakeTaskContext = new TaskAttemptContextImpl(configuration, new TaskAttemptID());
       InfinispanInputFormat<Integer, WebPage> inputFormat = new InfinispanInputFormat<>();
       RecordReader<Integer, WebPage> reader = inputFormat.createRecordReader(invalidSplit, fakeTaskContext);
@@ -365,9 +368,10 @@ public class InputOutputFormatTest {
       assertNotNull(reader.getCurrentKey());
    }
 
-   private InfinispanInputSplit createInfinispanSplit(Configuration configuration) {
-      String preferred = configuration.get(InfinispanConfiguration.INPUT_REMOTE_CACHE_HOST);
-      return new InfinispanInputSplit(new HashSet<Integer>(), preferred);
+   private InfinispanInputSplit createInfinispanSplit() {
+      int invalidPort = 3421;
+      InetSocketAddress unreachable = InetSocketAddress.createUnresolved("localhost", invalidPort);
+      return new InfinispanInputSplit(new HashSet<>(Arrays.asList(1, 2, 3)), unreachable);
    }
 
    private void saveToHDFS(List<WebPage> webPages) throws IOException {

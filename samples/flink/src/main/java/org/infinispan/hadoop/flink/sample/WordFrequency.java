@@ -42,7 +42,7 @@ public class WordFrequency {
       // In this sample, no writing to Infinispan will happen, so no need to configure
       // an InfinispanOutputFormat
       Configuration configuration = new Configuration();
-      configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_HOST, args[0]);
+      configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_SERVER_LIST, args[0]);
       configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_NAME, "phrases");
       Job job = Job.getInstance(configuration, "Infinispan Integration");
       InfinispanInputFormat<Long, String> infinispanInputFormat = new InfinispanInputFormat<>();

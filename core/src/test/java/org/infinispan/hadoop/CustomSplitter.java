@@ -42,8 +42,8 @@ public class CustomSplitter implements InfinispanSplitter {
          Set<Integer> s2 = new HashSet<>();
          s1.addAll(initChunk);
          s2.addAll(endChunk);
-         inputSplits.add(new InfinispanInputSplit(s1, ((InetSocketAddress) server.getKey()).getHostName()));
-         inputSplits.add(new InfinispanInputSplit(s2, ((InetSocketAddress) server.getKey()).getHostName()));
+         inputSplits.add(new InfinispanInputSplit(s1, ((InetSocketAddress) server.getKey())));
+         inputSplits.add(new InfinispanInputSplit(s2, ((InetSocketAddress) server.getKey())));
 
          taken.addAll(segments);
       }

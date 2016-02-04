@@ -33,8 +33,9 @@ public final class DefaultSplitter implements InfinispanSplitter {
       }
       List<InputSplit> splits = new ArrayList<>();
       if (numServers == 1) {
-         SocketAddress server = segmentsPerServer.keySet().iterator().next();
-         splits.add(new InfinispanInputSplit(segmentsPerServer.get(server), ((InetSocketAddress) server).getHostName()));
+         SocketAddress serverAddress = segmentsPerServer.keySet().iterator().next();
+         InetSocketAddress inetSocketAddress = (InetSocketAddress) serverAddress;
+         splits.add(new InfinispanInputSplit(segmentsPerServer.get(serverAddress), inetSocketAddress));
          return splits;
       }
 
@@ -69,7 +70,8 @@ public final class DefaultSplitter implements InfinispanSplitter {
       }
 
       for (Entry<SocketAddress, Set<Integer>> entry : partitions.entrySet()) {
-         splits.add(new InfinispanInputSplit(entry.getValue(), ((InetSocketAddress) entry.getKey()).getHostName()));
+         Set<Integer> segments = entry.getValue();
+         splits.add(new InfinispanInputSplit(segments, (InetSocketAddress) entry.getKey()));
       }
 
       return splits;

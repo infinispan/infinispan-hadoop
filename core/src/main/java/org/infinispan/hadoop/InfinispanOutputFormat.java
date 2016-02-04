@@ -26,7 +26,7 @@ public class InfinispanOutputFormat<K, V> extends OutputFormat<K, V> {
       InfinispanConfiguration infinispanConfiguration = new InfinispanConfiguration(configuration);
       Integer writeBatchSize = infinispanConfiguration.getWriteBatchSize();
       KeyValueConverter<Object, Object, K, V> outputConverter = infinispanConfiguration.getOutputConverter();
-      InfinispanCache<K, V> outputCache = InfinispanCache.getOutputCache(infinispanConfiguration);
+      InfinispanCache<K, V> outputCache = InfinispanCache.getOutputCache(infinispanConfiguration, null);
       InfinispanRecordWriter<K, V> recordWriter = new InfinispanRecordWriter<>(outputCache.getRemoteCache(), writeBatchSize);
       if (outputConverter == null) {
          return recordWriter;

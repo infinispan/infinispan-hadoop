@@ -58,11 +58,9 @@ hadoop.ispn.input.filter.factory  | The name of the filter factory deployed on t
 hadoop.ispn.input.cache.name  | The name of cache where data will be read from | "default"
 hadoop.ispn.input.read.batch | Batch size when reading from the cache | 5000
 hadoop.ispn.output.write.batch | Batch size when writing to the cache | 500
-hadoop.ispn.input.remote.cache.host | Hostname or IP Address of the input cache | localhost
-hadoop.ispn.input.remote.cache.port | HotRod server port of the input cache | 11222
+hadoop.ispn.input.remote.cache.servers | List of servers of the input cache, in the format ```host1:port1;host2:port2``` | localhost:11222
 hadoop.ispn.output.cache.name | The name of cache where job results will be written to | "default"
-hadoop.ispn.output.remote.cache.host |  Hostname or IP Address of the output cache
-hadoop.ispn.output.remote.cache.port | HotRod server port of the output cache | 11222
+hadoop.ispn.output.remote.cache.servers |  List of servers of the output cache, in the format ```host1:port1;host2:port2```
 hadoop.ispn.input.converter | Class name with an implementation of ```org.infinispan.hadoop.KeyValueConverter```, applied after reading from the cache | null (no converting)
 hadoop.ispn.output.converter | Class name with an implementation of ```org.infinispan.hadoop.KeyValueConverter```, applied before writing | null (no converting)
 
