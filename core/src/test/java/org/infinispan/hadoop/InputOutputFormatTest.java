@@ -8,8 +8,11 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -17,6 +20,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.hadoop.impl.InfinispanInputSplit;
 import org.infinispan.hadoop.testutils.domain.CategoryStats;
 import org.infinispan.hadoop.testutils.converters.CustomFilterFactory;
 import org.infinispan.hadoop.testutils.converters.FromWritableOutputConverter;
@@ -54,9 +58,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Arquillian.class)
@@ -338,6 +344,30 @@ public class InputOutputFormatTest {
       assertTrue(1 == outputCache.get("streaming").getCount());
       assertTrue(2 == outputCache.get("software").getCount());
       assertTrue(3 == outputCache.get("government").getCount());
+   }
+
+   @Test
+   public void testPreferredServerUnreachable() throws Exception {
+      int invalidPort = 3421;
+      Configuration configuration = createBaseConfiguration();
+
+
+      configuration.setInt(InfinispanConfiguration.INPUT_REMOTE_CACHE_PORT, invalidPort);
+
+      InfinispanInputSplit invalidSplit = createInfinispanSplit(configuration);
+
+      TaskAttemptContextImpl fakeTaskContext = new TaskAttemptContextImpl(configuration, new TaskAttemptID());
+      InfinispanInputFormat<Integer, WebPage> inputFormat = new InfinispanInputFormat<>();
+      RecordReader<Integer, WebPage> reader = inputFormat.createRecordReader(invalidSplit, fakeTaskContext);
+      reader.initialize(invalidSplit, fakeTaskContext);
+
+      reader.nextKeyValue();
+      assertNotNull(reader.getCurrentKey());
+   }
+
+   private InfinispanInputSplit createInfinispanSplit(Configuration configuration) {
+      String preferred = configuration.get(InfinispanConfiguration.INPUT_REMOTE_CACHE_HOST);
+      return new InfinispanInputSplit(new HashSet<Integer>(), preferred);
    }
 
    private void saveToHDFS(List<WebPage> webPages) throws IOException {
