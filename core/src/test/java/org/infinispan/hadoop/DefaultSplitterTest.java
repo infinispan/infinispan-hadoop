@@ -64,6 +64,44 @@ public class DefaultSplitterTest {
       assertSplits(splits, cacheTopologyInfo);
    }
 
+   /**
+    * Verifying that when the number of segments < number of servers, the number of returned splits equals to number
+    * of segments.
+    *
+    * @throws Exception
+     */
+   @Test
+   public void testReplicatedTopologyWithLowNumSegments() throws Exception {
+      int numServers = 60;
+      int numSegments = 59;
+      CacheTopologyInfo cacheTopologyInfo = new CacheTopologyInfoBuilder()
+              .replicated(numSegments, numServers)
+              .build();
+
+      List<InputSplit> splits = defaultSplitter.calculateSplits(cacheTopologyInfo);
+
+      assertEquals(numSegments, splits.size());
+      assertSplits(splits, cacheTopologyInfo);
+   }
+
+   /**
+    * Verifies the case when then number of segments equals to number of servers.
+    * @throws Exception
+     */
+   @Test
+   public void testReplicatedTopologyWithSameNumSegments() throws Exception {
+      int numServers = 60;
+      int numSegments = 60;
+      CacheTopologyInfo cacheTopologyInfo = new CacheTopologyInfoBuilder()
+              .replicated(numSegments, numServers)
+              .build();
+
+      List<InputSplit> splits = defaultSplitter.calculateSplits(cacheTopologyInfo);
+
+      assertEquals(numServers, splits.size());
+      assertSplits(splits, cacheTopologyInfo);
+   }
+
    @Test
    public void testDistributedTopology() throws Exception {
       int numServers = 4;
@@ -91,6 +129,25 @@ public class DefaultSplitterTest {
       List<InputSplit> splits = defaultSplitter.calculateSplits(cacheTopologyInfo);
 
       assertEquals(numServers, splits.size());
+      assertSplits(splits, cacheTopologyInfo);
+   }
+
+   /**
+    * Verifies the case when the number of segments < number of owners < number of servers.
+    * @throws Exception
+     */
+   @Test
+   public void testDistributedTopology3() throws Exception {
+      int numServers = 5;
+      int numOwners = 4;
+      int numSegments = 3;
+      CacheTopologyInfo cacheTopologyInfo = new CacheTopologyInfoBuilder()
+              .distributed(numSegments, numServers, numOwners)
+              .build();
+
+      List<InputSplit> splits = defaultSplitter.calculateSplits(cacheTopologyInfo);
+
+      assertEquals(numSegments, splits.size());
       assertSplits(splits, cacheTopologyInfo);
    }
 
@@ -140,8 +197,13 @@ public class DefaultSplitterTest {
       Map<SocketAddress, Set<Integer>> segmentsPerServer = cacheTopologyInfo.getSegmentsPerServer();
       int numServers = segmentsPerServer.keySet().size();
 
-      // Assert 1 split per server is created
-      assertEquals(numServers, splits.size());
+      //If there are less segments rather than servers, then the number of splits is equal to number of segments.
+      if (cacheTopologyInfo.getNumSegments() < numServers) {
+         assertEquals(cacheTopologyInfo.getNumSegments(), splits.size());
+      } else {
+         // Assert 1 split per server is created
+         assertEquals(numServers, splits.size());
+      }
 
       List<Integer> allSplitSegments = new ArrayList<>();
       for (InputSplit split : splits) {

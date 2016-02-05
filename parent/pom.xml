@@ -105,6 +105,7 @@
         <version.junit>4.11</version.junit>
         <version.jcipannotations>1.0</version.jcipannotations>
         <version.jboss.logging>3.1.4.GA</version.jboss.logging>
+        <version.jacoco>0.7.5.201505241946</version.jacoco>
     </properties>
 
     <repositories>
