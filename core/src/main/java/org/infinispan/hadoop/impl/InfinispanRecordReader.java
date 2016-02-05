@@ -68,6 +68,7 @@ public class InfinispanRecordReader<K, V> extends RecordReader<K, V> {
    @Override
    public void close() throws IOException {
       entryIterator.close();
+      remoteCache.getRemoteCacheManager().stop();
    }
 
 }

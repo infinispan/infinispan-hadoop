@@ -41,5 +41,6 @@ public class InfinispanRecordWriter<K, V> extends RecordWriter<K, V> {
       if (!batch.isEmpty()) {
          remoteCache.putAll(batch);
       }
+      remoteCache.getRemoteCacheManager().stop();
    }
 }
