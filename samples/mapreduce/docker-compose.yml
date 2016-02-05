@@ -1,0 +1,39 @@
+resolvable:
+  image: mgood/resolvable
+  container_name: resolvable
+  hostname: resolvable
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
+    - /etc/resolv.conf:/tmp/resolv.conf
+infinispan1:
+  image: gustavonalle/infinispan-server:$INFINISPAN_VERSION
+  container_name: ispn-1
+  hostname: ispn-1
+  volumes:
+      - $PWD:/usr/local/sample
+infinispan2:
+  image: gustavonalle/infinispan-server:$INFINISPAN_VERSION
+  container_name: ispn-2
+  hostname: ispn-2
+  volumes:
+      - $PWD:/usr/local/sample
+yarn-master:
+  image: gustavonalle/yarn:$YARN_VERSION
+  environment:
+    - SLAVES=2
+  container_name: master
+  hostname: master
+  volumes:
+    - $PWD:/usr/local/sample
+yarn-slave1:
+  image: gustavonalle/yarn:$YARN_VERSION
+  container_name: slave1
+  hostname: slave1
+  volumes:
+      - $PWD:/usr/local/sample
+yarn-slave2:
+  image: gustavonalle/yarn:$YARN_VERSION
+  container_name: slave2
+  hostname: slave2
+  volumes:
+      - $PWD:/usr/local/sample

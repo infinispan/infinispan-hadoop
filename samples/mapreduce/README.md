@@ -5,58 +5,40 @@ by running a YARN Map Reduce job against data stored in the cache.
 
 ### Requirements
 
-* Linux or MacOS X (using boot2docker)
+* Linux or MacOS X
 * Docker should be installed and running.Check it with ```docker --version```  
 * Samples built: run ```mvn clean install``` in the ```samples/``` directory
 
-### Note for boot2docker users
+### Note for MacOS users
 
-Add a route so that containers can be reached via their IPs:
-
-```
-sudo route -n add 172.17.0.0/16 `boot2docker ip`
-```
-
-### Preparing the Infinispan cluster
-
-Inside ```mapreduce/```, prepare the infinispan cluster:
-
-The script ```scripts/create-ispn-cluster.sh``` will create a 2 node server cluster each one with two distributed caches: ```map-reduce-in``` and ```map-reduce-out```
-
-After successful creation, it should print:
+Add a route so that containers can be reached via their IPs directly:
 
 ```
-Cluster created. Server1 @ 172.17.0.23, Server2 @ 172.17.0.24
+sudo route -n add 172.17.0.0/16 `docker-machine ip default`
 ```
 
-### Exporting the server location
+### Launching the clusters the Infinispan cluster
 
-For convenience, export a variable INFINISPAN_SERVER with the IP of the server:
+Run the script ```run-clusters.sh``` to launch a two node Infinispan cluster and a two node YARN cluster. 
 
-```
-export INFINISPAN_SERVER=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ispn-1)
-```
-
-### Preparing the YARN cluster
-
-To create a 3 node YARN cluster:
+The YARN admin interfaces can be found at:
 
 ```
-bash <(curl -s https://raw.githubusercontent.com/gustavonalle/yarn-docker/master/cluster.sh)
+[http://master:50070/dfshealth.html#tab-datanode](http://master:50070/dfshealth.html#tab-datanode)   
 ```
-
-After successful creation, it should print:
+and  
 
 ```
-Cluster started. HDFS UI on http://172.17.0.26:50070/dfshealth.html#tab-datanode
-YARN UI on http://172.17.0.26:8088/cluster/nodes
+[http://master:8088/cluster/nodes](http://master:8088/cluster/nodes)
 ```
 
 ### Populating the cache
 
-A simple 100k text file with random phrases can be generated using:
+A simple text file with 100k random phrases can be generated using:
 
-```docker exec -it master /usr/local/sample/target/scripts/generate.sh 100000```
+```
+docker exec -it master /usr/local/sample/target/scripts/generate.sh 100000
+```
 
 Inspect it using:
 
@@ -67,7 +49,7 @@ docker exec -it master more /file.txt
 and populate the cache using the command line:
 
 ```
-docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar  org.infinispan.hadoop.sample.util.ControllerCache --host $INFINISPAN_SERVER --cachename map-reduce-in --populate --file /file.txt"
+docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar  org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename map-reduce-in --populate --file /file.txt"
 ``` 
  
 ### Executing the job
@@ -75,24 +57,24 @@ docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.ja
 To execute the Job ```org.infinispan.hadoop.sample.InfinispanJobMain``` that reads data from the ```map-reduce-in``` cache, count words and write the output to ```map-reduce-out```:
 
 ```
-docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain $INFINISPAN_SERVER"
+docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain ispn-1"
 ```
 
 ### Dump the output
 
 ```
-docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.util.ControllerCache --host $INFINISPAN_SERVER --cachename map-reduce-out --dump"
+docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename map-reduce-out --dump | more"
 ```
 
 ### Changing the job
 
-The ```master``` docker container automatically maps the current folder to ```/usr/local/sample/ ``` inside the container; should you want to change the job, it's enough to rebuild the uber jar and re-run the job to pick up changes
+The ```master``` docker container automatically maps the current folder to ```/usr/local/sample/ ``` inside it; should you want to change the job, it's enough to rebuild the uber jar and re-run the job to pick up changes
 
 ### Cleanup
 
 To remove all the docker containers created in this sample:
 
 ```
-docker rm -f slave1 slave2 master ispn-1 ispn-2 resolvable
+docker-compose stop
 ```
 

@@ -23,6 +23,10 @@ function launch-server()
   echo $(ip ${server})
 }
 
+function get_variable() {
+   mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=$1 | grep -v '\[.*\]'
+}
+
 function waitForCluster()
 {
   MEMBERS=''

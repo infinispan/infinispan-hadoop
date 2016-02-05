@@ -15,6 +15,10 @@
     <name>Infinispan Hadoop Flink Sample</name>
     <description>Infinispan InputFormat/OutputFormat used by Flink</description>
 
+    <properties>
+        <version.flink>0.10.1</version.flink>
+    </properties>
+
     <dependencies>
 
         <dependency>
