@@ -21,11 +21,9 @@ sudo route -n add 172.17.0.0/16 `docker-machine ip default`
 
 Run the script ```./run-clusters.sh``` to launch a two node Infinispan cluster and a two node Flink cluster. 
 
-The Flink admin console can be found at:
+The Flink admin console can be found at:  
  
-```
 [http://master:8081/](http://master:8081/)
-```
 
 ### Populating the cache
 
