@@ -14,20 +14,21 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.hadoop.impl.InfinispanInputSplit;
-import org.infinispan.hadoop.testutils.domain.CategoryStats;
-import org.infinispan.hadoop.testutils.hadoop.MiniHadoopCluster;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.hadoop.impl.InfinispanInputSplit;
+import org.infinispan.hadoop.testutils.domain.CategoryStats;
 import org.infinispan.hadoop.testutils.domain.WebPage;
+import org.infinispan.hadoop.testutils.hadoop.MiniHadoopCluster;
 import org.infinispan.metadata.Metadata;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OverProtocol;
@@ -37,7 +38,9 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -89,15 +92,25 @@ public class InputOutputFormatTest {
       return createFilterArchive();
    }
 
-   private MiniHadoopCluster miniHadoopCluster = new MiniHadoopCluster();
+   private static MiniHadoopCluster miniHadoopCluster = new MiniHadoopCluster();
 
    private RemoteCache<Integer, WebPage> inputCache;
    private RemoteCache<String, CategoryStats> outputCache;
 
-   @Before
-   public void prepare() throws Exception {
+   @BeforeClass
+   public static void initHadoop() throws IOException {
       miniHadoopCluster.start();
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+   }
+
+   @AfterClass
+   public static void destroyHadoop() throws IOException {
+      miniHadoopCluster.shutDown();
+   }
+
+   private Configuration createBaseConfiguration() {
+      Configuration configuration = new YarnConfiguration();
+      Configuration baseConfiguration = miniHadoopCluster.getConfiguration();
+      baseConfiguration.iterator().forEachRemaining(c -> configuration.set(c.getKey(), c.getValue()));
 
       String host1Address = server1.getHotrodEndpoint().getInetAddress().getHostAddress();
       int port1 = server1.getHotrodEndpoint().getPort();
@@ -115,6 +128,17 @@ public class InputOutputFormatTest {
 
       configuration.set("io.serializations", "org.apache.hadoop.io.serializer.WritableSerialization, org.infinispan.hadoop.serialization.JBossMarshallerSerialization");
       configuration.set(InfinispanConfiguration.SERIALIZATION_CLASSES, "java.lang.String, java.lang.Integer," + WebPage.class.getName() + "," + CategoryStats.class.getName());
+
+      return configuration;
+   }
+
+   @Before
+   public void prepare() throws Exception {
+      String host1Address = server1.getHotrodEndpoint().getInetAddress().getHostAddress();
+      int port1 = server1.getHotrodEndpoint().getPort();
+
+      String host2Address = server2.getHotrodEndpoint().getInetAddress().getHostAddress();
+      int port2 = server2.getHotrodEndpoint().getPort();
 
       inputCache = new RemoteCacheManager(
               new ConfigurationBuilder().addServer().host(host1Address).port(port1).build()).getCache(INPUT_CACHE_NAME);
@@ -145,12 +169,13 @@ public class InputOutputFormatTest {
 
    @After
    public void stop() throws Exception {
-      miniHadoopCluster.shutDown();
+      inputCache.getRemoteCacheManager().stop();
+      outputCache.getRemoteCacheManager().stop();
    }
 
    @Test
    public void testReadAndWriteFromHDFS() throws Exception {
-      Job job = Job.getInstance(miniHadoopCluster.getConfiguration());
+      Job job = Job.getInstance(createBaseConfiguration());
 
       FileInputFormat.addInputPath(job, new Path("/input"));
       FileOutputFormat.setOutputPath(job, new Path("/output"));
@@ -172,7 +197,7 @@ public class InputOutputFormatTest {
 
    @Test
    public void testReuseExistingJobWithInfinispan() throws Exception {
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+      Configuration configuration = createBaseConfiguration();
 
       configuration.set(InfinispanConfiguration.INPUT_KEY_VALUE_CONVERTER, ToWritableInputConverter.class.getName());
       configuration.set(InfinispanConfiguration.OUTPUT_KEY_VALUE_CONVERTER, FromWritableOutputConverter.class.getName());
@@ -197,7 +222,7 @@ public class InputOutputFormatTest {
 
    @Test
    public void testReadFromInfinispanSaveToHDFS() throws Exception {
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+      Configuration configuration = createBaseConfiguration();
       configuration.set(InfinispanConfiguration.OUTPUT_KEY_VALUE_CONVERTER, ToWritableOutputConverter.class.getName());
 
       Job job = Job.getInstance(configuration);
@@ -211,7 +236,7 @@ public class InputOutputFormatTest {
       job.setOutputValueClass(IntWritable.class);
       job.setNumReduceTasks(1);
 
-      FileOutputFormat.setOutputPath(job, new Path("/output"));
+      FileOutputFormat.setOutputPath(job, new Path("/output-testReadFromInfinispanSaveToHDFS"));
 
       job.waitForCompletion(true);
 
@@ -223,7 +248,7 @@ public class InputOutputFormatTest {
 
    @Test
    public void testReadFromHDFSSaveToInfinispan() throws Exception {
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+      Configuration configuration = createBaseConfiguration();
       configuration.set(JobContext.KEY_COMPARATOR, Text.Comparator.class.getName());
 
       Job job = Job.getInstance(configuration);
@@ -249,7 +274,7 @@ public class InputOutputFormatTest {
 
    @Test
    public void testReadAndWriteToInfinispan() throws Exception {
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+      Configuration configuration = createBaseConfiguration();
       configuration.set(JobContext.KEY_COMPARATOR, Text.Comparator.class.getName());
 
       Job job = Job.getInstance(configuration);
@@ -273,7 +298,7 @@ public class InputOutputFormatTest {
 
    @Test
    public void testReadAndWriteToInfinispanWithFilter() throws Exception {
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+      Configuration configuration = createBaseConfiguration();
       configuration.set(InfinispanConfiguration.INPUT_FILTER_FACTORY, GOVERNMENT_PAGE_FILTER_FACTORY);
       configuration.set(JobContext.KEY_COMPARATOR, Text.Comparator.class.getName());
 
@@ -298,7 +323,7 @@ public class InputOutputFormatTest {
 
    @Test
    public void testCustomSplitter() throws Exception {
-      Configuration configuration = miniHadoopCluster.getConfiguration();
+      Configuration configuration = createBaseConfiguration();
       configuration.set(InfinispanConfiguration.SPLITTER_CLASS, CustomSplitter.class.getName());
       configuration.set(JobContext.KEY_COMPARATOR, Text.Comparator.class.getName());
 
