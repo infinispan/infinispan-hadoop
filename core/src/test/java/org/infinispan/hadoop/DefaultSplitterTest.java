@@ -230,6 +230,11 @@ public class DefaultSplitterTest {
             public Map<SocketAddress, Set<Integer>> getSegmentsPerServer() {
                return map;
             }
+
+            @Override
+            public Integer getTopologyId() {
+               return 1;
+            }
          };
       }
    }
