@@ -23,14 +23,11 @@ Run the script ```run-clusters.sh``` to launch a two node Infinispan cluster and
 
 The YARN admin interfaces can be found at:
 
-```
 [http://master:50070/dfshealth.html#tab-datanode](http://master:50070/dfshealth.html#tab-datanode)   
-```
+
 and  
 
-```
 [http://master:8088/cluster/nodes](http://master:8088/cluster/nodes)
-```
 
 ### Populating the cache
 
