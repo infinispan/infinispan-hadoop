@@ -72,7 +72,7 @@ import static org.junit.Assert.assertTrue;
 public class InputOutputFormatTest {
 
    private static final String INPUT_CACHE_NAME = "default";
-   private static final String OUTPUT_CACHE_NAME = "namedCache";
+   private static final String OUTPUT_CACHE_NAME = "memcachedCache";
    public static final String GOVERNMENT_PAGE_FILTER_FACTORY = "GovernmentPageFilterFactory";
 
    @InfinispanResource("container1")
