@@ -5,7 +5,7 @@ Integrations with Apache Hadoop and related frameworks.
 ### Requirements
 
 * Java 8
-* Infinispan Server 8.0.0.Final or above
+* Infinispan Server 8.2.0.Final or above
 * Hadoop Yarn 2.x
 
 ### InfinispanInputFormat and InfinispanOutputFormat
@@ -19,7 +19,7 @@ Partitions are generated based on segment ownership and allows processing of dat
  <dependency>  
     <groupId>org.infinispan.hadoop</groupId>  
     <artifactId>infinispan-hadoop-core</artifactId>  
-    <version>0.1</version>  
+    <version>0.2</version>  
  </dependency>  
 ```
 
