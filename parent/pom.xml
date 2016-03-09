@@ -4,7 +4,7 @@
 
     <groupId>org.infinispan.hadoop</groupId>
     <artifactId>parent</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <packaging>pom</packaging>
 
     <name>Infinispan Hadoop Parent</name>
@@ -52,7 +52,7 @@
         <connection>scm:git:git@github.com:infinispan/infinispan-hadoop.git</connection>
         <developerConnection>scm:git:git@github.com:infinispan/infinispan-hadoop.git</developerConnection>
         <url>https://github.com/infinispan/infinispan-hadoop</url>
-      <tag>HEAD</tag>
+      <tag>0.2</tag>
   </scm>
 
     <issueManagement>
