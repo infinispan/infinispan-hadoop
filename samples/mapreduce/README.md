@@ -54,7 +54,7 @@ docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.ja
 To execute the Job ```org.infinispan.hadoop.sample.InfinispanJobMain``` that reads data from the ```map-reduce-in``` cache, count words and write the output to ```map-reduce-out```:
 
 ```
-docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain ispn-1"
+docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain ispn-1;ispn-2"
 ```
 
 ### Dump the output
