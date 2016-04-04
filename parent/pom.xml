@@ -95,7 +95,7 @@
         </jboss.snapshots.repo.url>
 
         <version.hadoop>2.7.1</version.hadoop>
-        <version.infinispan>8.2.0.Final</version.infinispan>
+        <version.infinispan>8.2.1.Final</version.infinispan>
         <version.maven.compiler>3.1</version.maven.compiler>
         <version.maven.source>2.2.1</version.maven.source>
         <version.maven.resources>2.6</version.maven.resources>
