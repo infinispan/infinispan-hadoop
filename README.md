@@ -31,10 +31,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 
 Configuration configuration = new Configuration();
+String hosts = "172.17.0.2:11222;172.17.0.3:11222";
 
 // Configures input/output caches
-configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_HOST, host);
-configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_HOST, host);
+configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_SERVER_LIST, hosts);
+configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_SERVER_LIST, hosts);
 
 configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_NAME, "map-reduce-in");
 configuration.set(InfinispanConfiguration.OUTPUT_REMOTE_CACHE_NAME, "map-reduce-out");
