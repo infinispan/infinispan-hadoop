@@ -1,9 +1,5 @@
 package org.infinispan.hadoop.sample.util;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.util.CloseableIterator;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -16,6 +12,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.util.CloseableIterator;
 
 /**
  * Command line utility for Remote Caches.
@@ -50,8 +51,9 @@ public class ControllerCache {
    }
 
    private static <K, V> int executeOnCache(RemoteCacheRunnable<K, V> runnable, Map<Argument, String> map) throws Exception {
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(map.get(Argument.HOST),
-              Integer.parseInt(map.get(Argument.PORT)));
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServer().host(map.get(Argument.HOST)).port(Integer.parseInt(map.get(Argument.PORT)));
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
       RemoteCache<K, V> remoteCache = remoteCacheManager.getCache(map.get(Argument.CACHE_NAME));
       try {
          if (remoteCache == null) {
@@ -95,21 +97,17 @@ public class ControllerCache {
          while ((line = reader.readLine()) != null) {
             final String finalLine = line;
             final int finalLineNumber = lineNumber++;
-            executorService.execute(new Runnable() {
-               @Override
-               public void run() {
-                  remoteCache.put(finalLineNumber, finalLine);
-                  if (finalLineNumber % 1000 == 0) {
-                     System.out.println("Line " + finalLineNumber + " added by " + Thread.currentThread());
-                  }
+            executorService.execute(() -> {
+               remoteCache.put(finalLineNumber, finalLine);
+               if (finalLineNumber % 1000 == 0) {
+                  System.out.println("Line " + finalLineNumber + " added by " + Thread.currentThread());
                }
             });
          }
 
          reader.close();
          executorService.shutdown();
-         while (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-         }
+         executorService.awaitTermination(1, TimeUnit.MINUTES);
          return 0;
       }
    }
@@ -117,7 +115,7 @@ public class ControllerCache {
    private static class DumpCache implements RemoteCacheRunnable<Object, Object> {
 
       @Override
-      public int execute(RemoteCache<Object, Object> remoteCache, Map<Argument, String> map) throws Exception {
+      public int execute(RemoteCache<Object, Object> remoteCache, Map<Argument, String> map) {
          try (CloseableIterator<Map.Entry<Object, Object>> closeableIterator = remoteCache.retrieveEntries(null, 2000)) {
             while (closeableIterator.hasNext()) {
                Map.Entry<Object, Object> entry = closeableIterator.next();
@@ -131,7 +129,7 @@ public class ControllerCache {
    private static class ClearCache implements RemoteCacheRunnable<Object, Object> {
 
       @Override
-      public int execute(RemoteCache<Object, Object> remoteCache, Map<Argument, String> map) throws Exception {
+      public int execute(RemoteCache<Object, Object> remoteCache, Map<Argument, String> map) {
          remoteCache.clear();
          return 0;
       }
@@ -139,6 +137,6 @@ public class ControllerCache {
 
    private static ExecutorService executorService() {
       return new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors() * 2, 10, TimeUnit.SECONDS,
-              new ArrayBlockingQueue<Runnable>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
+            new ArrayBlockingQueue<>(1000), new ThreadPoolExecutor.CallerRunsPolicy());
    }
 }

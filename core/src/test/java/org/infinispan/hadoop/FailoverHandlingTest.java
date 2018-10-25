@@ -1,5 +1,16 @@
 package org.infinispan.hadoop;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -41,17 +52,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-
 /**
  * Testing the failover cases, i.e. the proper work of Hadoop MapReduce in case if one of the clustered servers will
  * go down.
@@ -62,7 +62,7 @@ import static org.junit.Assert.assertEquals;
 public class FailoverHandlingTest {
 
     private static final String INPUT_CACHE_NAME = "default";
-    private static final String OUTPUT_CACHE_NAME = "memcachedCache";
+    private static final String OUTPUT_CACHE_NAME = "repl";
     public static final int NUMBER_OF_ENTRIES = 100000;
 
     @InfinispanResource("container1")

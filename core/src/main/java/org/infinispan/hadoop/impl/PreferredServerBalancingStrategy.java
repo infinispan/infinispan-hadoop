@@ -1,12 +1,12 @@
 package org.infinispan.hadoop.impl;
 
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Set;
+
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 
 /**
  * Request balancing strategy that will prefer the provided server and when not possible will fall back to round robin.
@@ -35,11 +35,6 @@ public class PreferredServerBalancingStrategy implements FailoverRequestBalancin
          }
       }
       return false;
-   }
-
-   @Override
-   public SocketAddress nextServer() {
-      return roundRobin.nextServer(null);
    }
 
    @Override

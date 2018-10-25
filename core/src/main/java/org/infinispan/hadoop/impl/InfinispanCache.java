@@ -1,5 +1,7 @@
 package org.infinispan.hadoop.impl;
 
+import java.net.InetSocketAddress;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
@@ -7,8 +9,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.hadoop.InfinispanConfiguration;
-
-import java.net.InetSocketAddress;
 
 /**
  * Wrapper around RemoteCache.
@@ -56,7 +56,7 @@ public class InfinispanCache<K, V> {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.addServers(serverList);
       if (preferredServer != null) {
-         configurationBuilder.balancingStrategy(new PreferredServerBalancingStrategy(preferredServer));
+         configurationBuilder.balancingStrategy(() -> new PreferredServerBalancingStrategy(preferredServer));
       }
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(configurationBuilder.build());
       RemoteCache<K, V> remoteCache = remoteCacheManager.getCache(name);

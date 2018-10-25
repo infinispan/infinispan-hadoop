@@ -1,5 +1,26 @@
 package org.infinispan.hadoop;
 
+import static org.infinispan.hadoop.testutils.Utils.addCacheManagerModuleDep;
+import static org.infinispan.hadoop.testutils.Utils.readResultFromHDFS;
+import static org.infinispan.hadoop.testutils.Utils.removeCacheManagerModuleDep;
+import static org.infinispan.hadoop.testutils.Utils.saveToHDFS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -20,6 +41,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.hadoop.impl.InfinispanInputSplit;
+import org.infinispan.hadoop.testutils.Utils;
 import org.infinispan.hadoop.testutils.converters.CustomFilterFactory;
 import org.infinispan.hadoop.testutils.converters.FromWritableOutputConverter;
 import org.infinispan.hadoop.testutils.converters.ToWritableInputConverter;
@@ -44,63 +66,52 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.hadoop.testutils.Utils.readResultFromHDFS;
-import static org.infinispan.hadoop.testutils.Utils.saveToHDFS;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 @RunWith(Arquillian.class)
 public class InputOutputFormatTest {
 
    private static final String INPUT_CACHE_NAME = "default";
-   private static final String OUTPUT_CACHE_NAME = "memcachedCache";
+   private static final String OUTPUT_CACHE_NAME = "repl";
    public static final String GOVERNMENT_PAGE_FILTER_FACTORY = "GovernmentPageFilterFactory";
+   private static final Set<File> deployments = new HashSet<>();
+   private static final Set<File> serverConfigs = new HashSet<>();
 
    @InfinispanResource("container1")
-   RemoteInfinispanServer server1;
+   private RemoteInfinispanServer server1;
 
    @InfinispanResource("container2")
-   RemoteInfinispanServer server2;
+   private RemoteInfinispanServer server2;
 
    @ArquillianResource
-   ContainerController controller;
+   private ContainerController controller;
 
    @Deployment(testable = false, name = "server-filter-1")
    @TargetsContainer("container1")
    @OverProtocol("jmx-as7")
-   public static Archive<?> deploy1() throws IOException {
+   public static Archive<?> deploy1() {
       return createFilterArchive();
    }
 
    @Deployment(testable = false, name = "server-filter-2")
    @TargetsContainer("container2")
    @OverProtocol("jmx-as7")
-   public static Archive<?> deploy2() throws IOException {
+   public static Archive<?> deploy2() {
       return createFilterArchive();
    }
 
    private static MiniHadoopCluster miniHadoopCluster = new MiniHadoopCluster();
 
-   private RemoteCache inputCache;
+   private RemoteCache<Integer, Object> inputCache;
    private RemoteCache<String, CategoryStats> outputCache;
    private static int testCounter = 0;
    private static int numberOfTestMethods = 0;
@@ -118,7 +129,7 @@ public class InputOutputFormatTest {
    }
 
    @BeforeClass
-   public static void initHadoopAndServers() throws IOException {
+   public static void initHadoopAndServers() throws Exception {
       miniHadoopCluster.start();
 
       for (Method method : InputOutputFormatTest.class.getMethods()) {
@@ -126,11 +137,40 @@ public class InputOutputFormatTest {
             numberOfTestMethods++;
          }
       }
+
+      Archive<?> entitiesArchive = createEntitiesArchive();
+      deployEntitiesToServer("node1", entitiesArchive);
+      deployEntitiesToServer("node2", entitiesArchive);
+   }
+
+   private static void deployEntitiesToServer(String serverParentFolder, Archive<?> entitiesArchive) throws Exception {
+      String jarPath = "/standalone/deployments/" + entitiesArchive.getName();
+      String configPath = "/standalone/configuration/clustered.xml";
+
+      File node = Utils.findServerPath(serverParentFolder);
+      File deployment = new File(node.getAbsolutePath(), jarPath);
+      File configFile = new File(node.getAbsolutePath(), configPath);
+      addCacheManagerModuleDep(configFile, entitiesArchive.getName());
+      entitiesArchive.as(ZipExporter.class).exportTo(deployment, true);
+      deployments.add(deployment);
+      serverConfigs.add(configFile);
+   }
+
+   private static void removeModuleConfig() {
+      for (File serverConfig : serverConfigs) {
+         try {
+            removeCacheManagerModuleDep(serverConfig);
+         } catch (Exception e) {
+            Assert.fail("Fail to remove <modules> config from the server");
+         }
+      }
    }
 
    @AfterClass
-   public static void destroyHadoop() throws IOException {
+   public static void destroy() {
       miniHadoopCluster.shutDown();
+      deployments.forEach(File::deleteOnExit);
+      serverConfigs.forEach(s -> removeModuleConfig());
    }
 
    private Configuration createBaseConfiguration() {
@@ -197,7 +237,7 @@ public class InputOutputFormatTest {
    }
 
    @After
-   public void stop() throws Exception {
+   public void stop() {
       inputCache.getRemoteCacheManager().stop();
       outputCache.getRemoteCacheManager().stop();
 
@@ -232,9 +272,9 @@ public class InputOutputFormatTest {
       job.waitForCompletion(true);
 
       Map<String, Integer> resultMap = readResultFromHDFS(miniHadoopCluster, outputPath);
-      assertTrue(1 == resultMap.get("streaming"));
-      assertTrue(2 == resultMap.get("software"));
-      assertTrue(3 == resultMap.get("government"));
+      assertEquals(1, (int) resultMap.get("streaming"));
+      assertEquals(2, (int) resultMap.get("software"));
+      assertEquals(3, (int) resultMap.get("government"));
    }
 
    @Test
@@ -257,9 +297,9 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.get("streaming").getCount());
-      assertTrue(2 == outputCache.get("software").getCount());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, (int) outputCache.get("streaming").getCount());
+      assertEquals(2, (int) outputCache.get("software").getCount());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    @Test
@@ -284,17 +324,15 @@ public class InputOutputFormatTest {
       job.waitForCompletion(true);
 
       Map<String, Integer> resultMap = readResultFromHDFS(miniHadoopCluster, outputPath);
-      assertTrue(1 == resultMap.get("streaming"));
-      assertTrue(2 == resultMap.get("software"));
-      assertTrue(3 == resultMap.get("government"));
+      assertEquals(1, (int) resultMap.get("streaming"));
+      assertEquals(2, (int) resultMap.get("software"));
+      assertEquals(3, (int) resultMap.get("government"));
    }
 
    /**
     * Verifies that if there are different types of objects in the cache, the implemented general mapper will perform mapping
     * for all of them.
-    *
-    * @throws Exception
-     */
+    */
    @Test
    public void testReadFromInfinispanSaveToHDFS1() throws Exception {
       inputCache.put(1000, new SimpleDomain("streaming"));
@@ -321,9 +359,9 @@ public class InputOutputFormatTest {
       job.waitForCompletion(true);
 
       Map<String, Integer> resultMap = readResultFromHDFS(miniHadoopCluster, outputPath);
-      assertTrue(2 == resultMap.get("streaming"));
-      assertTrue(3 == resultMap.get("software"));
-      assertTrue(4 == resultMap.get("government"));
+      assertEquals(2, (int) resultMap.get("streaming"));
+      assertEquals(3, (int) resultMap.get("software"));
+      assertEquals(4, (int) resultMap.get("government"));
    }
 
    @Test
@@ -347,17 +385,16 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.get("streaming").getCount());
-      assertTrue(2 == outputCache.get("software").getCount());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, (int) outputCache.get("streaming").getCount());
+      assertEquals(2, (int) outputCache.get("software").getCount());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    /**
     * Tests the HDFS -> Infinispan MapReduce task using {@link InfinispanConfiguration#INPUT_READ_BATCH_SIZE}
     * and {@link InfinispanConfiguration#OUTPUT_WRITE_BATCH_SIZE}
     * properties.
-    * @throws Exception
-     */
+    */
    @Test
    public void testReadFromHDFSSaveToInfinispanWithLowWriteBatchSize() throws Exception {
       Configuration configuration = createBaseConfiguration();
@@ -380,9 +417,9 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.get("streaming").getCount());
-      assertTrue(2 == outputCache.get("software").getCount());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, (int) outputCache.get("streaming").getCount());
+      assertEquals(2, (int) outputCache.get("software").getCount());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    @Test
@@ -404,17 +441,15 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.get("streaming").getCount());
-      assertTrue(2 == outputCache.get("software").getCount());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, (int) outputCache.get("streaming").getCount());
+      assertEquals(2, (int) outputCache.get("software").getCount());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    /**
     * Verifies that when the cache contains objects of different types, the implemented general mapper will return
     * the mapreduce result for specified one/or for all of them.
-    *
-    * @throws Exception
-     */
+    */
    @Test
    public void testReadAndWriteToInfinispan1() throws Exception {
       //Inserting into cache new SimpleDomain objects
@@ -439,17 +474,16 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(2 == outputCache.get("streaming").getCount());
-      assertTrue(3 == outputCache.get("software").getCount());
-      assertTrue(4 == outputCache.get("government").getCount());
+      assertEquals(2, (int) outputCache.get("streaming").getCount());
+      assertEquals(3, (int) outputCache.get("software").getCount());
+      assertEquals(4, (int) outputCache.get("government").getCount());
    }
 
    /**
     * Verifies that when the serializable type is not set into configuration using {@link InfinispanConfiguration#SERIALIZATION_CLASSES}
     * property, the result of mapreduce is empty.
     *
-    * @throws Exception
-     */
+    */
    @Test
    public void testReadAndWriteToInfinispan2() throws Exception {
       //Inserting into cache new SimpleDomain objects
@@ -481,9 +515,7 @@ public class InputOutputFormatTest {
     * Tests the use of {@link InfinispanConfiguration#INPUT_READ_BATCH_SIZE}
     * and {@link InfinispanConfiguration#OUTPUT_WRITE_BATCH_SIZE}
     * properties.
-    *
-    * @throws Exception
-     */
+    */
    @Test
    public void testReadAndWriteToInfinispanWithLowReadAndWriteBatchSize() throws Exception {
       Configuration configuration = createBaseConfiguration();
@@ -505,9 +537,9 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.get("streaming").getCount());
-      assertTrue(2 == outputCache.get("software").getCount());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, (int) outputCache.get("streaming").getCount());
+      assertEquals(2, (int) outputCache.get("software").getCount());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    @Test
@@ -531,16 +563,14 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.size());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, outputCache.size());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    /**
     * Tests the Infinispan -> HDFS MapReduce execution with filtering of the input using
     * {@link InfinispanConfiguration#INPUT_FILTER_FACTORY} property.
-    *
-    * @throws Exception
-     */
+    */
    @Test
    public void testReadFromInfinispanSaveToHDFSWithFilterFactory() throws Exception {
       Configuration configuration = createBaseConfiguration();
@@ -564,8 +594,8 @@ public class InputOutputFormatTest {
       job.waitForCompletion(true);
 
       Map<String, Integer> resultMap = readResultFromHDFS(miniHadoopCluster, outputPath);
-      assertTrue(1 == resultMap.size());
-      assertTrue(3 == resultMap.get("government"));
+      assertEquals(1, resultMap.size());
+      assertEquals(3, (int) resultMap.get("government"));
    }
 
    @Test
@@ -588,9 +618,9 @@ public class InputOutputFormatTest {
 
       job.waitForCompletion(true);
 
-      assertTrue(1 == outputCache.get("streaming").getCount());
-      assertTrue(2 == outputCache.get("software").getCount());
-      assertTrue(3 == outputCache.get("government").getCount());
+      assertEquals(1, (int) outputCache.get("streaming").getCount());
+      assertEquals(2, (int) outputCache.get("software").getCount());
+      assertEquals(3, (int) outputCache.get("government").getCount());
    }
 
    @Test
@@ -610,7 +640,9 @@ public class InputOutputFormatTest {
    private InfinispanInputSplit createInfinispanSplit() {
       int invalidPort = 3421;
       InetSocketAddress unreachable = InetSocketAddress.createUnresolved("localhost", invalidPort);
-      return new InfinispanInputSplit(new HashSet<>(Arrays.asList(1, 2, 3)), unreachable);
+      int numSegments = inputCache.getCacheTopologyInfo().getNumSegments();
+      Set<Integer> allSegments = IntStream.range(0, numSegments).boxed().collect(Collectors.toSet());
+      return new InfinispanInputSplit(allSegments, unreachable);
    }
 
    private void saveToInputCache(List<WebPage> webPages) {
@@ -619,10 +651,18 @@ public class InputOutputFormatTest {
       }
    }
 
-   private static Archive<?> createFilterArchive() throws IOException {
+   private static Archive<?> createFilterArchive() {
       return ShrinkWrap.create(JavaArchive.class, "server-filter.jar")
-              .addClasses(CustomFilterFactory.class, CustomFilterFactory.GovernmentFilter.class, WebPage.class)
-              .addAsServiceProvider(KeyValueFilterConverterFactory.class, CustomFilterFactory.class);
+            .addClasses(CustomFilterFactory.class, CustomFilterFactory.GovernmentFilter.class)
+            .addAsServiceProvider(KeyValueFilterConverterFactory.class, CustomFilterFactory.class)
+            .add(new StringAsset("Dependencies: deployment.entities.jar"), "META-INF/MANIFEST.MF");
+   }
+
+   private static Archive<?> createEntitiesArchive() {
+      return ShrinkWrap.create(JavaArchive.class, "entities.jar")
+            .addClasses(WebPage.class, WebPage.WebPageExternalizer.class)
+            .add(new StringAsset("Dependencies: org.infinispan.commons"), "META-INF/MANIFEST.MF");
+
    }
 
 }
