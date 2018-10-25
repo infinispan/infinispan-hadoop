@@ -15,6 +15,10 @@
     <name>Infinispan Hadoop Core</name>
     <description>InputFormat/OutputFormat to integrate with Hadoop Map Reduce and supported tools</description>
 
+    <properties>
+        <server1.dist>${project.build.directory}/node1</server1.dist>
+        <server2.dist>${project.build.directory}/node2</server2.dist>
+    </properties>
     <dependencies>
 
         <dependency>
@@ -35,6 +39,16 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
             <version>${version.hadoop}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
         </dependency>
 
@@ -43,6 +57,12 @@
             <artifactId>hadoop-mapreduce-client-common</artifactId>
             <version>${version.hadoop}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -50,6 +70,12 @@
             <artifactId>hadoop-mapreduce-client-core</artifactId>
             <version>${version.hadoop}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -57,6 +83,12 @@
             <artifactId>hadoop-common</artifactId>
             <version>${version.hadoop}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -134,35 +166,45 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>${version.download-maven}</version>
                 <executions>
                     <execution>
-                        <id>unpack</id>
-                        <phase>compile</phase>
+                        <id>download-infinispan-server</id>
+                        <phase>generate-resources</phase>
                         <goals>
-                            <goal>unpack</goal>
+                            <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.infinispan.server</groupId>
-                                    <artifactId>infinispan-server</artifactId>
-                                    <version>${version.infinispan}</version>
-                                    <type>zip</type>
-                                    <classifier>bin</classifier>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/node1</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.infinispan.server</groupId>
-                                    <artifactId>infinispan-server</artifactId>
-                                    <version>${version.infinispan}</version>
-                                    <type>zip</type>
-                                    <classifier>bin</classifier>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/node2</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
+                            <url>
+                                http://downloads.jboss.org/infinispan/${version.infinispan}/infinispan-server-${version.infinispan}.zip
+                            </url>
+                            <unpack>true</unpack>
+                            <outputDirectory>${server1.dist}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${version.maven.resources}</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${server2.dist}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${server1.dist}</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                 </executions>

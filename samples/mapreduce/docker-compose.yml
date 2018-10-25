@@ -6,13 +6,13 @@ resolvable:
     - /var/run/docker.sock:/tmp/docker.sock
     - /etc/resolv.conf:/tmp/resolv.conf
 infinispan1:
-  image: gustavonalle/infinispan-server:$INFINISPAN_VERSION
+  image: jboss/infinispan-server:$INFINISPAN_VERSION
   container_name: ispn-1
   hostname: ispn-1
   volumes:
       - $PWD:/usr/local/sample
 infinispan2:
-  image: gustavonalle/infinispan-server:$INFINISPAN_VERSION
+  image: jboss/infinispan-server:$INFINISPAN_VERSION
   container_name: ispn-2
   hostname: ispn-2
   volumes:

@@ -12,7 +12,9 @@
                 <property name="jbossHome">${basedir}/target/node1/infinispan-server-${version.infinispan}</property>
                 <property name="managementPort">9990</property>
                 <property name="serverConfig">clustered.xml</property>
-                <property name="javaVmArguments">-Xmx1048m -Djava.net.preferIPv4Stack=true -Djboss.node.name=node0 -Djgroups.join_timeout=1000</property>
+                <property name="javaVmArguments">-Xmx1048m -Djava.net.preferIPv4Stack=true -Djboss.node.name=node0
+                    -Dinfinispan.deserialization.whitelist.regexps=.*
+                </property>
                 <property name="jmxDomain">jboss.datagrid-infinispan</property>
             </configuration>
         </container>
@@ -22,7 +24,7 @@
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">-Xmx1048m -Djava.net.preferIPv4Stack=true -Djboss.node.name=node1
-                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=1000
+                    -Djboss.socket.binding.port-offset=100 -Dinfinispan.deserialization.whitelist.regexps=.*
                 </property>
                 <property name="jmxDomain">jboss.datagrid-infinispan</property>
             </configuration>
