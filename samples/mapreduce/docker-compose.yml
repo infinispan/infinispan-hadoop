@@ -1,39 +1,58 @@
-resolvable:
-  image: mgood/resolvable
-  container_name: resolvable
-  hostname: resolvable
-  volumes:
-    - /var/run/docker.sock:/tmp/docker.sock
-    - /etc/resolv.conf:/tmp/resolv.conf
-infinispan1:
-  image: jboss/infinispan-server:$INFINISPAN_VERSION
-  container_name: ispn-1
-  hostname: ispn-1
-  volumes:
+version: "3"
+services:
+  resolvable:
+    image: mgood/resolvable
+    container_name: resolvable
+    networks:
+      - sample
+    hostname: resolvable
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+      - /etc/resolv.conf:/tmp/resolv.conf
+  infinispan1:
+    image: jboss/infinispan-server:$INFINISPAN_VERSION
+    container_name: ispn-1
+    networks:
+      - sample
+    hostname: ispn-1
+    volumes:
       - $PWD:/usr/local/sample
-infinispan2:
-  image: jboss/infinispan-server:$INFINISPAN_VERSION
-  container_name: ispn-2
-  hostname: ispn-2
-  volumes:
+  infinispan2:
+    image: jboss/infinispan-server:$INFINISPAN_VERSION
+    container_name: ispn-2
+    networks:
+      - sample
+    hostname: ispn-2
+    volumes:
       - $PWD:/usr/local/sample
-yarn-master:
-  image: gustavonalle/yarn:$YARN_VERSION
-  environment:
-    - SLAVES=2
-  container_name: master
-  hostname: master
-  volumes:
-    - $PWD:/usr/local/sample
-yarn-slave1:
-  image: gustavonalle/yarn:$YARN_VERSION
-  container_name: slave1
-  hostname: slave1
-  volumes:
+  yarn-master:
+    image: gustavonalle/yarn:$YARN_VERSION
+    environment:
+      - SLAVES=2
+    container_name: master
+    networks:
+      - sample
+    hostname: master
+    volumes:
       - $PWD:/usr/local/sample
-yarn-slave2:
-  image: gustavonalle/yarn:$YARN_VERSION
-  container_name: slave2
-  hostname: slave2
-  volumes:
+  yarn-slave1:
+    image: gustavonalle/yarn:$YARN_VERSION
+    container_name: slave1
+    networks:
+      - sample
+    hostname: slave1
+    volumes:
       - $PWD:/usr/local/sample
+  yarn-slave2:
+    image: gustavonalle/yarn:$YARN_VERSION
+    container_name: slave2
+    hostname: slave2
+    networks:
+      - sample
+    volumes:
+      - $PWD:/usr/local/sample
+
+networks:
+  sample:
+    external:
+      name: sample

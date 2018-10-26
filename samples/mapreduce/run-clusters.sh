@@ -11,6 +11,7 @@ INFINISPAN_VERSION=$(get_variable "version.infinispan")
 YARN_VERSION=$(get_variable "version.hadoop")
 export INFINISPAN_VERSION YARN_VERSION
 
+docker network create sample || echo "Not creating network as it already exists"
 docker-compose up -d
 
 waitForCluster "ispn-1"
@@ -25,4 +26,4 @@ create-cache "ispn-2" "map-reduce-out"
 
 echo "Starting YARN cluster"
 chmod 755 target/scripts/*.sh
-docker exec -it master sh -c -l '/usr/local/hadoop/sbin/start-wrapper.sh'
+docker exec -it master bash -li '/usr/local/hadoop/sbin/start-wrapper.sh'

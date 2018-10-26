@@ -17,13 +17,12 @@ Add a route so that containers can be reached via their IPs directly:
 sudo route -n add 172.17.0.0/16 `docker-machine ip default`
 ```
 
-### Launching the clusters the Infinispan cluster
+### Launching Infinispan and YARN clusters
 
 Run the script ```run-clusters.sh``` to launch a two node Infinispan cluster and a two node YARN cluster. 
 
 The YARN admin interfaces can be found at:
-
-[http://master:50070/dfshealth.html#tab-datanode](http://master:50070/dfshealth.html#tab-datanode)   
+[http://master:9870/dfshealth.html#tab-datanode](http://master:9870/dfshealth.html#tab-datanode)
 
 and  
 
@@ -46,7 +45,7 @@ docker exec -it master more /file.txt
 and populate the cache using the command line:
 
 ```
-docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar  org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename map-reduce-in --populate --file /file.txt"
+docker exec -it master sh -c "java -cp /usr/local/sample/target/app.jar  org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename map-reduce-in --populate --file /file.txt"
 ``` 
  
 ### Executing the job
@@ -54,13 +53,13 @@ docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.ja
 To execute the Job ```org.infinispan.hadoop.sample.InfinispanJobMain``` that reads data from the ```map-reduce-in``` cache, count words and write the output to ```map-reduce-out```:
 
 ```
-docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.InfinispanJobMain ispn-1;ispn-2"
+docker exec -it master sh -l -c "yarn jar /usr/local/sample/target/app.jar org.infinispan.hadoop.sample.InfinispanJobMain ispn-1;ispn-2"
 ```
 
 ### Dump the output
 
 ```
-docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename map-reduce-out --dump | more"
+docker exec -it master sh -c "java -cp /usr/local/sample/target/app.jar org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename map-reduce-out --dump | more"
 ```
 
 ### Changing the job
@@ -73,5 +72,6 @@ To remove all the docker containers created in this sample:
 
 ```
 docker-compose stop
+docker network rm sample
 ```
 
