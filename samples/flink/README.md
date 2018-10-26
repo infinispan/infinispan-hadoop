@@ -42,7 +42,7 @@ docker exec -it master more /file.txt
 and populate the cache using the command line:
 
 ```
-docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.jar org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename phrases --populate --file /file.txt"
+docker exec -it master sh -c "java -cp /usr/local/sample/target/app.jar org.infinispan.hadoop.sample.util.ControllerCache --host ispn-1 --cachename phrases --populate --file /file.txt"
 ``` 
  
 ### Executing the job
@@ -50,7 +50,7 @@ docker exec -it master sh -c "java -cp /usr/local/sample/target/*dependencies.ja
 To execute the job ```org.infinispan.hadoop.flink.sample.WordFrequency``` that reads data from the ```phrases``` cache and prints a histogram of the number of words per phrase:
 
 ```
-docker exec -it master sh -c "/usr/local/flink/bin/flink run  /usr/local/sample/target/*dependencies.jar ispn-1"
+docker exec -it master sh -c "/usr/local/flink/bin/flink run  /usr/local/sample/target/app.jar ispn-1"
 ```
 
 ### Changing the job
@@ -63,5 +63,6 @@ To remove all the docker containers created in this sample:
 
 ```
 docker-compose stop
+docker network rm sample
 ```
 
