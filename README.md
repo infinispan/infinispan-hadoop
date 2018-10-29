@@ -71,3 +71,20 @@ hadoop.ispn.output.converter | Class name with an implementation of ```org.infin
 
 Refer to https://github.com/infinispan/infinispan-hadoop/tree/master/samples/
 
+#### Releasing
+
+The $MAVEN_HOME/conf/settings.xml must contain credentials for the release repository. Add the following section in ```<servers>```:
+
+```xml
+<server>
+   <id>jboss-snapshots-repository</id>
+   <username>RELEASE_USER</username>
+   <password>RELEASE_PASS</password>
+</server>
+<server>
+   <id>jboss-releases-repository</id>
+   <username>RELEASE_USER</username>
+   <password>RELEASE_PASS</password>
+</server>
+```
+
