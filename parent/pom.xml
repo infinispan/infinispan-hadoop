@@ -49,8 +49,8 @@
     </mailingLists>
 
     <scm>
-        <connection>scm:git:git@github.com:infinispan/infinispan-hadoop.git</connection>
-        <developerConnection>scm:git:git@github.com:infinispan/infinispan-hadoop.git</developerConnection>
+	    <connection>scm:git:https://github.com/infinispan/infinispan-hadoop.git</connection>
+	    <developerConnection>scm:git:https://github.com/infinispan/infinispan-hadoop.git</developerConnection>
         <url>https://github.com/infinispan/infinispan-hadoop</url>
       <tag>HEAD</tag>
   </scm>
