@@ -15,10 +15,6 @@
     <name>Infinispan Hadoop Flink Sample</name>
     <description>Infinispan InputFormat/OutputFormat used by Flink</description>
 
-    <properties>
-        <version.flink>0.10.1</version.flink>
-    </properties>
-
     <dependencies>
 
         <dependency>
@@ -36,14 +32,12 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
-            <version>0.9.1</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>${version.hadoop}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -58,7 +52,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>${version.maven.shade}</version>
                 <executions>
                     <execution>
                         <id>none-default</id>

@@ -2,6 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-build-configuration-parent</artifactId>
+        <version>9.4.1.Final</version>
+    </parent>
+
     <groupId>org.infinispan.hadoop</groupId>
     <artifactId>parent</artifactId>
     <version>0.4-SNAPSHOT</version>
@@ -77,7 +83,6 @@
             <name>JBoss Release Repository</name>
             <url>${jboss.releases.repo.url}</url>
         </repository>
-
         <snapshotRepository>
             <id>jboss-snapshots-repository</id>
             <name>JBoss Snapshot Repository</name>
@@ -89,24 +94,21 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2
-        </jboss.releases.repo.url>
-        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots
-        </jboss.snapshots.repo.url>
+        <branding.name>${infinispan.brand.name}</branding.name>
+        <branding.version>${project.version}</branding.version>
+        <branding.prefix>${infinispan.brand.prefix}</branding.prefix>
 
-        <version.hadoop>3.1.1</version.hadoop>
-        <version.infinispan>9.4.0.Final</version.infinispan>
-        <version.maven.compiler>3.1</version.maven.compiler>
-        <version.maven.source>2.2.1</version.maven.source>
-        <version.maven.resources>2.6</version.maven.resources>
-        <version.maven.surefire>2.16</version.maven.surefire>
         <version.download-maven>1.4.0</version.download-maven>
-        <version.infinispan.arquillian>1.2.0.Alpha3</version.infinispan.arquillian>
+        <version.maven.javadoc>3.0.1</version.maven.javadoc>
+        <version.maven.release>2.5.3</version.maven.release>
+        <version.maven.resources>3.1.0</version.maven.resources>
+        <version.maven.shade>3.2.0</version.maven.shade>
 
-        <version.junit>4.11</version.junit>
+        <version.infinispan>9.4.1.Final</version.infinispan>
+        <version.flink>0.10.1</version.flink>
+        <version.hadoop>3.1.1</version.hadoop>
+        <version.infinispan.arquillian>1.2.0.Alpha3</version.infinispan.arquillian>
         <version.jcipannotations>1.0</version.jcipannotations>
-        <version.jboss.logging>3.1.4.GA</version.jboss.logging>
-        <version.jacoco>0.7.5.201505241946</version.jacoco>
     </properties>
 
     <repositories>
@@ -144,6 +146,17 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-core</artifactId>
+                <version>${version.infinispan}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-client-hotrod</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${version.junit}</version>
@@ -166,7 +179,60 @@
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>${version.hadoop}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-server-tests</artifactId>
+                <version>${version.hadoop}</version>
+                <classifier>tests</classifier>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-minicluster</artifactId>
+                <version>${version.hadoop}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-mapreduce-client-common</artifactId>
+                <version>${version.hadoop}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${version.hadoop}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>org.jacoco.agent</artifactId>
+                <version>${version.jacoco}</version>
+                <classifier>runtime</classifier>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.arquillian.junit</groupId>
+                <artifactId>arquillian-junit-container</artifactId>
+                <version>${version.arquillian}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.arquillian</groupId>
+                <artifactId>wildfly-arquillian-container-managed</artifactId>
+                <version>${version.org.wildfly.arquillian}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan.arquillian.container</groupId>
+                <artifactId>infinispan-arquillian-impl</artifactId>
+                <version>${version.infinispan.arquillian}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-java</artifactId>
+                <version>${version.flink}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -175,7 +241,7 @@
             <plugins>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${version.maven.compiler}</version>
+                    <version>${version.maven-compiler-plugin}</version>
                     <configuration>
                         <source>1.8</source>
                         <target>1.8</target>
@@ -189,13 +255,18 @@
                 </plugin>
 
                 <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.maven.javadoc}</version>
+                </plugin>
+
+                <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>${version.maven.resources}</version>
                 </plugin>
 
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>2.5.2</version>
+                    <version>${version.maven.release}</version>
                     <configuration>
                         <tagNameFormat>@{project.version}</tagNameFormat>
                     </configuration>
