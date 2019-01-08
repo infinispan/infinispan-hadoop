@@ -17,8 +17,6 @@
 
     <properties>
         <javadoc.title>Hadoop Core :: ${branding.name} ${branding.version} API</javadoc.title>
-        <server1.dist>${project.build.directory}/node1</server1.dist>
-        <server2.dist>${project.build.directory}/node2</server2.dist>
     </properties>
     <dependencies>
 
@@ -154,52 +152,6 @@
             <plugin>
                 <artifactId>maven-surefire-report-plugin</artifactId>
             </plugin>
-
-            <plugin>
-                <groupId>com.googlecode.maven-download-plugin</groupId>
-                <artifactId>download-maven-plugin</artifactId>
-                <version>${version.download-maven}</version>
-                <executions>
-                    <execution>
-                        <id>download-infinispan-server</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>
-                                http://downloads.jboss.org/infinispan/${version.infinispan}/infinispan-server-${version.infinispan}.zip
-                            </url>
-                            <unpack>true</unpack>
-                            <outputDirectory>${server1.dist}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>${version.maven.resources}</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${server2.dist}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${server1.dist}</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
 
