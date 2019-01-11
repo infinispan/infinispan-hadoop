@@ -162,7 +162,7 @@
                 <executions>
                     <execution>
                         <id>download-infinispan-server</id>
-                        <phase>generate-resources</phase>
+                        <phase>generate-test-resources</phase>
                         <goals>
                             <goal>wget</goal>
                         </goals>
@@ -183,7 +183,7 @@
                 <executions>
                     <execution>
                         <id>copy-resources</id>
-                        <phase>generate-resources</phase>
+                        <phase>generate-test-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
