@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-build-configuration-parent</artifactId>
-        <version>9.4.1.Final</version>
+        <version>9.4.6.Final</version>
     </parent>
 
     <groupId>org.infinispan.hadoop</groupId>
@@ -95,20 +95,32 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <branding.name>${infinispan.brand.name}</branding.name>
-        <branding.version>${project.version}</branding.version>
+        <branding.version>${infinispan.brand.version}</branding.version>
         <branding.prefix>${infinispan.brand.prefix}</branding.prefix>
+
+        <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2</jboss.releases.repo.url>
+        <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots</jboss.snapshots.repo.url>
 
         <version.download-maven>1.4.0</version.download-maven>
         <version.maven.javadoc>3.0.1</version.maven.javadoc>
         <version.maven.release>2.5.3</version.maven.release>
         <version.maven.resources>3.1.0</version.maven.resources>
         <version.maven.shade>3.2.0</version.maven.shade>
+        <version.maven.bundle>4.0.0</version.maven.bundle>
+        <version.maven.compiler>3.7.0-jboss-1</version.maven.compiler>
+        <version.maven.source>3.0.1</version.maven.source>
+        <version.maven.surefire>2.21.0</version.maven.surefire>
 
-        <version.infinispan>9.4.1.Final</version.infinispan>
-        <version.flink>0.10.1</version.flink>
+        <version.infinispan>9.4.6.Final</version.infinispan>
+        <version.flink>1.7.1</version.flink>
         <version.hadoop>3.1.1</version.hadoop>
         <version.infinispan.arquillian>1.2.0.Alpha3</version.infinispan.arquillian>
-        <version.jcipannotations>1.0</version.jcipannotations>
+        <version.jcipannotations>1.0.0</version.jcipannotations>
+        <version.arquillian>1.1.13.Final</version.arquillian>
+        <version.jacoco>0.7.5.201505241946</version.jacoco>
+        <version.jboss.logging>3.3.2.Final</version.jboss.logging>
+        <version.junit>4.12</version.junit>
+        <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
     </properties>
 
     <repositories>
