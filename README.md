@@ -9,6 +9,8 @@ Integrations with Apache Hadoop and related frameworks.
 | 0.1  | 8.0.x  | 2.x | 8 |
 | 0.2  | 8.2.x  | 2.x | 8 |
 | 0.3  | 9.4.x | 2.x 3.x | 8 |
+| 0.4  | 9.4.x | 2.x 3.x | 8 |
+
 
 ### InfinispanInputFormat and InfinispanOutputFormat
 
@@ -21,7 +23,7 @@ Partitions are generated based on segment ownership and allows processing of dat
  <dependency>  
     <groupId>org.infinispan.hadoop</groupId>  
     <artifactId>infinispan-hadoop-core</artifactId>  
-    <version>0.3</version>
+    <version>0.4</version>
  </dependency>  
 ```
 
