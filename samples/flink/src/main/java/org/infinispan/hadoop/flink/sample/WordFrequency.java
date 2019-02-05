@@ -1,18 +1,19 @@
 package org.infinispan.hadoop.flink.sample;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.hadoopcompatibility.HadoopInputs;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.infinispan.hadoop.InfinispanConfiguration;
 import org.infinispan.hadoop.InfinispanInputFormat;
-
-import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * Apache Flink job to calculate histograms with number of words on phrases.
@@ -45,13 +46,16 @@ public class WordFrequency {
       configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_SERVER_LIST, args[0]);
       configuration.set(InfinispanConfiguration.INPUT_REMOTE_CACHE_NAME, "phrases");
       Job job = Job.getInstance(configuration, "Infinispan Integration");
-      InfinispanInputFormat<Long, String> infinispanInputFormat = new InfinispanInputFormat<>();
+      InfinispanInputFormat<Integer, String> infinispanInputFormat = new InfinispanInputFormat<>();
 
       // Obtain the Execution environment from Flink
       final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
       // Create a DataSource that reads data using the InfinispanInputFormat
-      DataSource<Tuple2<Long, String>> infinispanDS = env.createHadoopInput(infinispanInputFormat, Long.class, String.class, job);
+
+      DataSource<Tuple2<Integer, String>> infinispanDS = env.createInput(
+            HadoopInputs.createHadoopInput(infinispanInputFormat, Integer.class, String.class, job)
+      );
 
       // Count entries
       long count = infinispanDS.count();
