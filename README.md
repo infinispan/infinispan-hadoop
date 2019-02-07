@@ -90,3 +90,8 @@ The $MAVEN_HOME/conf/settings.xml must contain credentials for the release repos
 </server>
 ```
 
+To release:
+
+```
+mvn release:prepare release:perform -B
+```
