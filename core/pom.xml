@@ -19,13 +19,15 @@
         <javadoc.title>Hadoop Core :: ${branding.name} ${branding.version} API</javadoc.title>
         <server1.dist>${project.build.directory}/node1</server1.dist>
         <server2.dist>${project.build.directory}/node2</server2.dist>
+
+        <version.glassfish-jaxb-core>2.3.0</version.glassfish-jaxb-core>
     </properties>
     <dependencies>
 
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-core</artifactId>
-            <version>${version.glassfish.jaxb}</version>
+            <version>${version.glassfish-jaxb-core}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
