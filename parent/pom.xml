@@ -119,7 +119,7 @@
         <version.arquillian>1.1.13.Final</version.arquillian>
         <version.jacoco>0.7.5.201505241946</version.jacoco>
         <version.jboss.logging>3.3.2.Final</version.jboss.logging>
-        <version.junit>4.12</version.junit>
+        <version.junit>4.13.1</version.junit>
         <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
     </properties>
 
