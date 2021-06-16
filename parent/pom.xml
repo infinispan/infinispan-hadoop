@@ -111,7 +111,7 @@
         <version.maven.source>3.0.1</version.maven.source>
         <version.maven.surefire>2.21.0</version.maven.surefire>
 
-        <version.infinispan>9.4.6.Final</version.infinispan>
+        <version.infinispan>10.0.0.Final</version.infinispan>
         <version.flink>1.7.1</version.flink>
         <version.hadoop>3.1.1</version.hadoop>
         <version.infinispan.arquillian>1.2.0.Alpha3</version.infinispan.arquillian>
