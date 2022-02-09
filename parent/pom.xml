@@ -113,7 +113,7 @@
 
         <version.infinispan>9.4.6.Final</version.infinispan>
         <version.flink>1.7.1</version.flink>
-        <version.hadoop>3.1.1</version.hadoop>
+        <version.hadoop>3.1.4</version.hadoop>
         <version.infinispan.arquillian>1.2.0.Alpha3</version.infinispan.arquillian>
         <version.jcipannotations>1.0.0</version.jcipannotations>
         <version.arquillian>1.1.13.Final</version.arquillian>
